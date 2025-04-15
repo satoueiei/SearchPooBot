@@ -7,7 +7,7 @@ import time
 import random
 from twikit.errors import CouldNotTweet
 import os
-
+from keep_alive import keep_alive
 # --- 環境変数からcookies.jsonとtimeline.jsonを作成 ---
 if not os.path.exists('cookies.json'):
     cookies_data = os.getenv('COOKIES_JSON')
@@ -152,10 +152,12 @@ async def run_periodically():
 
 # イベントループで実行
 try:
+    keep_alive()
     asyncio.run(run_periodically())
 except KeyboardInterrupt:
     print("プログラムがユーザーによって終了されました。")
 except Exception as e:
     print(f"致命的なエラー: {e}")
     print("プログラムを再起動します...")
+    keep_alive()
     asyncio.run(run_periodically())  # 再起動
