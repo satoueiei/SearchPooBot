@@ -8,6 +8,8 @@ import random
 from twikit.errors import CouldNotTweet
 import os
 from keep_alive import keep_alive
+import sys
+
 # --- 環境変数からcookies.jsonとtimeline.jsonを作成 ---
 if not os.path.exists('cookies.json'):
     cookies_data = os.getenv('COOKIES_JSON')
@@ -69,10 +71,13 @@ def process_inko_text_revised(text: str, space_char: str = '_') -> str:
 
 async def wait(time):
     print(f"{time}秒スリープ中…")
+    sys.stdout.flush()
     for t in range(time,0,-1):
         print(f"あと{t}秒…")
+        sys.stdout.flush()
         await asyncio.sleep(1)
     print("スリープ終了")
+    sys.stdout.flush()
     return 0
 
 
@@ -84,55 +89,70 @@ async def main():
     TorL=['Top','Latest']
     local=await client.get_place_trends(23424856)
     print("取得トレンド\n")
+    sys.stdout.flush()
     for i in local["trends"]:
         print(f"{i.name}\n")
+        sys.stdout.flush()
     getTrend = random.choice(local["trends"])
     taipu=random.choice(TorL)
     max_retries=5
     print(f"検索クエリ：{getTrend.name}\n検索タイプ：{taipu}")
+    sys.stdout.flush()
     output = await client.search_tweet(getTrend.name,taipu)
     for n in range(4):
         for i in output:
             tweet = process_inko_text_revised(i.text)
             if re.search("[あ-ん]+|[ア-ン]+", tweet)!=None:
                 print(f"💩ツイート発見({len(tweet)}文字)\n")
+                sys.stdout.flush()
                 content=await client2.get_tweet_by_id(i.id)
                 if content.favorited==False:
                     quote=f"https://x.com/{i.user.screen_name}/status/{i.id}"
                     if len(tweet)>200:
                         print(f"200文字＜{len(tweet)}文字なのでスキップ")
+                        sys.stdout.flush()
                         await wait(random.randint(10,20))
                     else:
                         print(f"元ツイ(by{i.user.screen_name})：{i.text}")
+                        sys.stdout.flush()
                         print(f"出力結果：{tweet}\n")
+                        sys.stdout.flush()
                         for attempt in range(max_retries):
                             try:
                                 print(f"ツイート試行：{attempt+1}回目")
+                                sys.stdout.flush()
                                 tweet_result=await client2.create_tweet(tweet,None,None,None,None,quote)
                                 print(f"ツイートURL: https://x.com/{i.user.screen_name}/status/{tweet_result.id}")
+                                sys.stdout.flush()
                                 await client2.favorite_tweet(i.id)
                             except CouldNotTweet as e:
                                 print(f"ツイート失敗\n{e}")
+                                sys.stdout.flush()
                                 if attempt < max_retries-1:                                    
                                     await wait(random.randint(10,60))
                                 else:
                                     print("試行回数リミットに達しました。スキップします。")
+                                    sys.stdout.flush()
                                     await wait(random.randint(10,20))
                                     break
                             except Exception as e:
                                 print(f"レート制限を観測\n{e}")
+                                sys.stdout.flush()
                                 if attempt < max_retries-1:                                    
                                     await wait(random.randint(600,900))
                                 else:
                                     print("試行回数リミットに達しました。スキップします。")
+                                    sys.stdout.flush()
                                     await wait(random.randint(10,20))
                                     break
                             else:
-                                print(f"ツイートしました")                        
+                                print(f"ツイートしました") 
+                                sys.stdout.flush()                       
                                 await wait(random.randint(50,70))
                                 break
                 else:
                     print("過去に捕捉済みなのでスキップ")
+                    sys.stdout.flush()
                     await wait(random.randint(10,20))
                     
         output = await output.next()
@@ -141,8 +161,10 @@ async def run_periodically():
     while True:
         try:
             print(f"実行開始: {time.ctime()}")
+            sys.stdout.flush()
             await main()  # main() を実行
             print(f"実行終了: {time.ctime()}\n")
+            sys.stdout.flush()
             await wait(random.randint(240, 300))
         except Exception as e:
             print(f"エラー発生: {e}")
