@@ -8,8 +8,6 @@ import random
 from twikit.errors import CouldNotTweet
 import os
 
-import os
-
 # --- 環境変数からcookies.jsonとtimeline.jsonを作成 ---
 if not os.path.exists('cookies.json'):
     cookies_data = os.getenv('COOKIES_JSON')
@@ -83,9 +81,12 @@ async def main():
     client.load_cookies('timeline.json')
     client2=Client('ja')
     client2.load_cookies('cookies.json')
-    trends=['for-you','trending','news','sports','entertainment']
     TorL=['Top','Latest']
-    getTrend = random.choice(await client.get_trends(random.choice(trends)))
+    local=await client.get_place_trends(23424856)
+    print("取得トレンド\n")
+    for i in local["trends"]:
+        print(f"{i.name}\n")
+    getTrend = random.choice(local["trends"])
     taipu=random.choice(TorL)
     max_retries=5
     print(f"検索クエリ：{getTrend.name}\n検索タイプ：{taipu}")
